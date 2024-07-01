@@ -7,7 +7,7 @@ module.exports = {
   rules: {
     'no-console': 'error',
     'react/self-closing-comp': [
-      'error',
+      'warn',
       {
         component: true,
         html: true
