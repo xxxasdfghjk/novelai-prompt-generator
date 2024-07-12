@@ -7,11 +7,12 @@ type HeaderContentProps = {
 }
 const HeaderContent = ({ link, title, selected }: HeaderContentProps) => {
   return (
-    <div
+    <Link
+      href={link}
       className={`bg-slate-600 grow-[1] p-4 flex justify-center hover:opacity-70 transition-duration: 150ms cursor-pointer ${selected ? 'bg-slate-800' : ''}`}
     >
-      <Link href={link}>{title}</Link>
-    </div>
+      {title}
+    </Link>
   )
 }
 

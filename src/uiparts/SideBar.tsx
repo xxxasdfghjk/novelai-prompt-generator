@@ -10,7 +10,7 @@ type SideBarProps = {
 }
 const SideBar = ({ title, children }: SideBarProps) => {
   return (
-    <div className="flex-grow overflow-y-scroll overflow-x-hidden p-4 bg-slate-700 h-screen max-w-[33%] min-w-[33%]">
+    <div className="overflow-y-scroll overflow-x-scroll p-4 bg-slate-700 h-screen min-w-[25%]">
       <SideBarTitle title={title} />
       <section>{children}</section>
     </div>
