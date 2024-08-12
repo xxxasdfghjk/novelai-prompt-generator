@@ -18,6 +18,10 @@ const HeaderContent = ({ link, title, selected }: HeaderContentProps) => {
 
 const MENU = [
   {
+    link: '/generate',
+    title: 'Generate'
+  },
+  {
     link: '/wild-card-generator',
     title: 'Wild Card'
   },

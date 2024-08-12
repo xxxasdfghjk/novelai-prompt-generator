@@ -7,10 +7,13 @@ const SideBarTitle = ({ title }: { title: string }) => {
 type SideBarProps = {
   title: string
   children: ReactNode
+  minWidth?: string
 }
-const SideBar = ({ title, children }: SideBarProps) => {
+const SideBar = ({ title, children, minWidth }: SideBarProps) => {
   return (
-    <div className="overflow-y-scroll overflow-x-scroll p-4 bg-slate-700 h-screen min-w-[25%]">
+    <div
+      className={`overflow-y-scroll overflow-x-scroll p-4 bg-slate-700 h-screen min-w-[${minWidth ?? 25}%]`}
+    >
       <SideBarTitle title={title} />
       <section>{children}</section>
     </div>

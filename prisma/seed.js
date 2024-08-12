@@ -14,7 +14,7 @@ async function main() {
     .createManyAndReturn({
       data: variableTypeIdList.flatMap((id, index) => {
         const elementNum = faker.number.int({ min: 2, max: 6 })
-        return new Array(elementNum).fill(0).map((_) => ({
+        return new Array(elementNum).fill(0).map(() => ({
           canEmpty: faker.datatype.boolean(),
           variableTypeId: id,
           name: faker.word.noun() + index + faker.word.noun(),
@@ -33,7 +33,7 @@ async function main() {
     .createManyAndReturn({
       data: variableTypeIdList.flatMap((id, index) => {
         const num = faker.number.int({ min: 2, max: 10 })
-        return new Array(num).fill(0).map((_) => ({
+        return new Array(num).fill(0).map(() => ({
           variableTypeId: id,
           name: faker.word.noun(),
           order: index

@@ -23,6 +23,24 @@ const updateFormSchema = z.object({
     })
   )
 })
+
+const insertFormSchema = z.object({
+  variableTypeId: z
+    .string()
+    .regex(/[0-9]+/)
+    .transform((e) => parseInt(e, 10)),
+  name: z.string(),
+  instanceElementList: z.array(
+    z.object({
+      id: z
+        .string()
+        .regex(/[0-9]+/)
+        .transform((e) => parseInt(e, 10)),
+      value: z.string()
+    })
+  )
+})
+
 export const update = async (
   prevState: State,
   formData: FormData
@@ -43,4 +61,33 @@ export const update = async (
   } catch {
     return { state: 'error' }
   }
+}
+
+export const insert = async (
+  prevState: State,
+  formData: FormData
+): Promise<State> => {
+  const formObject = formDataToObject(formData)
+  const parsed = insertFormSchema.safeParse(formObject)
+  if (!parsed.success) {
+    return { state: 'error' }
+  }
+  const { name, instanceElementList, variableTypeId } = parsed.data
+  return prisma.$transaction(async (prisma) => {
+    try {
+      const insertData = await prisma.variableInstance.create({
+        data: { name: name, order: 1000, variableTypeId: variableTypeId }
+      })
+      await prisma.variableInstanceElement.createMany({
+        data: instanceElementList.map((e) => ({
+          text: e.value,
+          variableInstanceId: insertData.id,
+          variableTypeElementId: e.id
+        }))
+      })
+      return { state: 'success' }
+    } catch {
+      return { state: 'error' }
+    }
+  })
 }

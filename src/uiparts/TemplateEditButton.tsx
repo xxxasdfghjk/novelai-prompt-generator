@@ -4,7 +4,9 @@ import AddIcon from '@mui/icons-material/Add'
 import {
   Button,
   Dialog,
+  MenuItem,
   Paper,
+  Select,
   Table,
   TableBody,
   TableCell,
@@ -18,29 +20,31 @@ import { useFormState } from 'react-dom'
 import { useForm, useFieldArray, SubmitHandler } from 'react-hook-form'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
-import { insert } from '@/app/actions/variableInstanceElement'
+import { updateTemplate } from '@/app/actions/template'
 
 const inputSchema = z.object({
-  name: z.string().min(1, 'instance name required.'),
-  instanceElementList: z.array(
-    z.object({
-      id: z.number(),
-      value: z.string()
-    })
-  )
+  templateId: z.number(),
+  name: z.string().min(1, 'template name required.'),
+  text: z.string().min(1, 'text required.'),
+  variableTypeList: z.array(z.object({ typeId: z.number() }))
 })
 type InputSchema = z.infer<typeof inputSchema>
 
 type Props = {
-  typeId: number
-  typeName: string
-  typeElementList: {
+  templateId: number
+  text: string
+  name: string
+  defaultVariableTypeList: {
+    name: string
+    id: number
+  }[]
+  variableTypeList: {
     name: string
     id: number
   }[]
 }
 
-const VariableTypeInstanceRegisterButton = (props: Props) => {
+const TemplateEditButton = (props: Props) => {
   const {
     register,
     handleSubmit,
@@ -48,18 +52,19 @@ const VariableTypeInstanceRegisterButton = (props: Props) => {
     formState: { errors }
   } = useForm<InputSchema>({
     defaultValues: {
-      name: '',
-      instanceElementList: props.typeElementList.map((e) => ({
-        value: '',
-        id: e.id
+      name: props.name,
+      text: props.text,
+      templateId: props.templateId,
+      variableTypeList: props.defaultVariableTypeList.map((e) => ({
+        typeId: e.id
       }))
     },
     resolver: zodResolver(inputSchema)
   })
 
-  const { fields } = useFieldArray({
+  const { fields, append } = useFieldArray({
     control,
-    name: 'instanceElementList'
+    name: 'variableTypeList'
   })
   const [open, setOpen] = useState<boolean>(false)
   const ref = useRef<HTMLFormElement>(null)
@@ -70,7 +75,7 @@ const VariableTypeInstanceRegisterButton = (props: Props) => {
   useEffect(() => {
     if (inputData !== undefined) ref.current?.requestSubmit()
   }, [inputData])
-  const [state, action] = useFormState(insert, {
+  const [state, action] = useFormState(updateTemplate, {
     state: 'initial'
   } as const)
   const router = useRouter()
@@ -105,7 +110,7 @@ const VariableTypeInstanceRegisterButton = (props: Props) => {
                 <TableBody>
                   <TableRow hover>
                     <TableCell className="text-slate-100 bg-zinc-700">
-                      Instance Name
+                      Template Name
                     </TableCell>
                     <TableCell className="text-slate-100">
                       <TextField
@@ -113,6 +118,29 @@ const VariableTypeInstanceRegisterButton = (props: Props) => {
                         {...register('name')}
                         error={!!errors.name?.message}
                         helperText={errors.name?.message}
+                        defaultValue={props.name}
+                      />
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+              <Table
+                aria-label="simple table"
+                className="bg-slate-500 text-slate-100"
+              >
+                <TableBody>
+                  <TableRow hover>
+                    <TableCell className="text-slate-100 bg-zinc-700">
+                      Text
+                    </TableCell>
+                    <TableCell className="text-slate-100 w-full">
+                      <TextField
+                        className="bg-slate-100 rounded-md w-full"
+                        {...register('text')}
+                        error={!!errors.text?.message}
+                        helperText={errors.text?.message}
+                        multiline={true}
+                        defaultValue={props.text}
                       />
                     </TableCell>
                   </TableRow>
@@ -129,10 +157,7 @@ const VariableTypeInstanceRegisterButton = (props: Props) => {
                 <TableHead className="bg-slate-600 text-slate-100">
                   <TableRow>
                     <TableCell className="text-center  text-slate-100 font-bold bg-zinc-800">
-                      {'Element Name'}
-                    </TableCell>
-                    <TableCell className="text-center  text-slate-100 font-bold bg-zinc-800">
-                      {'Value'}
+                      {'Use VariableType'}
                     </TableCell>
                   </TableRow>
                 </TableHead>
@@ -140,34 +165,45 @@ const VariableTypeInstanceRegisterButton = (props: Props) => {
                   {fields.map((e, i) => (
                     <TableRow key={e.id + i} hover>
                       <TableCell className="text-slate-100 p-2">
-                        {props.typeElementList[i].name}
-                        <input
-                          hidden
-                          readOnly
-                          {...register(`instanceElementList.${i}.id`)}
-                          value={props.typeElementList[i].id}
-                        />
-                      </TableCell>
-                      <TableCell className="text-slate-100 p-2">
-                        <TextField
-                          className="bg-slate-100 rounded-md"
-                          {...register(`instanceElementList.${i}.value`)}
-                          error={
-                            !!errors.instanceElementList?.[i]?.value?.message
+                        <Select
+                          MenuProps={{ disableScrollLock: true }}
+                          defaultValue={
+                            props.defaultVariableTypeList[i]?.id ?? ''
                           }
-                          helperText={
-                            errors.instanceElementList?.[i]?.value?.message
-                          }
-                        />
+                          {...register(`variableTypeList.${i}.typeId`)}
+                          className="w-full bg-slate-50"
+                        >
+                          {props.variableTypeList
+                            .filter(
+                              (variableType) =>
+                                fields.find(
+                                  (field) => field.typeId === variableType.id
+                                ) === undefined || e.typeId === variableType.id
+                            )
+                            .map((e) => (
+                              <MenuItem key={e.id} value={e.id}>
+                                {e.name}
+                              </MenuItem>
+                            ))}
+                        </Select>
                       </TableCell>
                     </TableRow>
                   ))}
+                  <TableRow>
+                    <TableCell
+                      colSpan={3}
+                      className="bg-slate-800 text-slate-100  hover:opacity-50 cursor-pointer"
+                      onClick={() => append({ typeId: -1 })}
+                    >
+                      <div className="w-full h-full flex justify-center items-center rounded-lg">
+                        Add Row
+                        <AddIcon />
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 </TableBody>
               </Table>
             </TableContainer>
-            <div className="text-red-700">
-              {errors.instanceElementList?.root?.message}
-            </div>
           </section>
           <div className="flex justify-center items-center p-2">
             <Button type="submit" variant="contained" className="h-16 w-48">
@@ -177,16 +213,12 @@ const VariableTypeInstanceRegisterButton = (props: Props) => {
         </form>
       </Dialog>
       <form action={action} ref={ref}>
-        <input hidden name="name" value={inputData?.name} />
-        <input hidden name="variableTypeId" value={props.typeId} />
-        {inputData?.instanceElementList.map((e, i) => (
-          <Fragment key={e.id + i}>
-            <input
-              hidden
-              name={`instanceElementList[${i}][value]`}
-              value={e.value}
-            />
-            <input hidden name={`instanceElementList[${i}][id]`} value={e.id} />
+        <input hidden name="templateId" value={props.templateId} readOnly />
+        <input hidden name="name" value={inputData?.name} readOnly />
+        <input hidden name="text" value={inputData?.text} readOnly />
+        {inputData?.variableTypeList.map((e, i) => (
+          <Fragment key={e.typeId + i}>
+            <input hidden name={`variableTypeIdList[${i}]`} value={e.typeId} />
           </Fragment>
         ))}
       </form>
@@ -194,4 +226,4 @@ const VariableTypeInstanceRegisterButton = (props: Props) => {
   )
 }
 
-export default VariableTypeInstanceRegisterButton
+export default TemplateEditButton

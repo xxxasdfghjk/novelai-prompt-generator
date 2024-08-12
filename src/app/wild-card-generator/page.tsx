@@ -1,6 +1,5 @@
 import HeaderMenu from '@/uiparts/HeaderMenu'
 import SideBar from '@/uiparts/SideBar'
-import TemplateGenerator from '@/uiparts/TemplateGenerator'
 import React from 'react'
 import Content from '@/uiparts/Content'
 
@@ -20,7 +19,6 @@ const TemplateGeneratorPage = () => {
       </SideBar>
       <Content>
         <HeaderMenu selected="Wild Card" />
-        <TemplateGenerator />
       </Content>
     </section>
   )

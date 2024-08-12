@@ -44,12 +44,15 @@ const VariableInstanceList = async ({ variableTypeId }: Props) => {
             className="bg-slate-500 text-slate-100"
           >
             <TableHead className="bg-slate-600 text-slate-100">
-              <TableRow>
-                <TableCell className="text-slate-100 bg-zinc-900">
+              <TableRow className="flex">
+                <TableCell className="text-slate-100 bg-zinc-900 w-48">
                   Instance Name
                 </TableCell>
                 {variableType.variableTypeElement.map(({ name }) => (
-                  <TableCell className="text-slate-100" key={name}>
+                  <TableCell
+                    className="text-slate-100 text-center border-l-slate-400 border-l flex-1"
+                    key={name}
+                  >
                     {name}
                   </TableCell>
                 ))}
@@ -58,14 +61,14 @@ const VariableInstanceList = async ({ variableTypeId }: Props) => {
             <TableBody>
               {variableInstanceList.map(
                 ({ variableInstanceElement, name, id, variableTypeId }) => (
-                  <TableRow hover key={id}>
-                    <TableCell className="text-slate-100 bg-zinc-600">
+                  <TableRow hover key={id} className="flex">
+                    <TableCell className="text-slate-100 bg-zinc-600 w-48">
                       <Link href={`/variables/${variableTypeId}/${id}`}>
                         {name}
                       </Link>
                     </TableCell>
                     {variableInstanceElement.map((e) => (
-                      <TableCell className="text-slate-100" key={e.id}>
+                      <TableCell className="text-slate-100 flex-1" key={e.id}>
                         {e.text}
                       </TableCell>
                     ))}
@@ -75,8 +78,15 @@ const VariableInstanceList = async ({ variableTypeId }: Props) => {
             </TableBody>
           </Table>
         </TableContainer>
-        <VariableTypeInstanceRegisterButton />
       </section>
+      <VariableTypeInstanceRegisterButton
+        typeId={variableTypeId}
+        typeName={variableType.name}
+        typeElementList={variableType.variableTypeElement.map((e) => ({
+          name: e.name,
+          id: e.id
+        }))}
+      />
     </>
   )
 }

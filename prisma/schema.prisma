@@ -16,13 +16,16 @@ model Template {
   text String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  variableType TemplateVariableRelation[]
+  templateVariableRelation TemplateVariableRelation[]
 }
 
 model TemplateVariableRelation {
   id Int @id @default(autoincrement())
   templateId Int
+  variableTypeId Int
   template Template @relation(fields: [templateId],references: [id])
+  variableType VariableType @relation(fields: [variableTypeId],references: [id])
+  @@unique(fields:[variableTypeId,templateId],name:"template_variable_relation_unique")
 }
 
 
@@ -33,6 +36,7 @@ model VariableType {
   updatedAt DateTime @updatedAt
   variableInstance VariableInstance[]
   variableTypeElement VariableTypeElement[]
+  templateVariableRelation TemplateVariableRelation[]
 }
 
 model VariableTypeElement {
@@ -45,6 +49,8 @@ model VariableTypeElement {
   updatedAt DateTime @updatedAt
   variableType VariableType @relation(fields: [variableTypeId],references: [id],onDelete: Cascade)
   variableInstanceElement VariableInstanceElement[]
+  @@unique(fields: [name,variableTypeId], name: "variable_type_identifier")
+
 }
 
 model VariableInstance {
@@ -54,9 +60,9 @@ model VariableInstance {
   order Int
   variableType VariableType @relation(fields: [variableTypeId],references: [id],onDelete: Cascade)
   variableInstanceElement VariableInstanceElement[]
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  @@unique(fields: [name,variableTypeId], name: "variable_type_identifier")
 }
 
 model VariableInstanceElement {

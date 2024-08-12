@@ -1,6 +1,5 @@
 import HeaderMenu from '@/uiparts/HeaderMenu'
 import SideBar from '@/uiparts/SideBar'
-import TemplateGenerator from '@/uiparts/TemplateGenerator'
 import React from 'react'
 import Content from '@/uiparts/Content'
 import VariableTypeList from '@/uiparts/VariableTypeList'
@@ -13,7 +12,6 @@ const VariablesPage = async () => {
       </SideBar>
       <Content>
         <HeaderMenu selected="Variables" />
-        <TemplateGenerator />
       </Content>
     </section>
   )

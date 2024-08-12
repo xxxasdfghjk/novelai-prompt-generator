@@ -23,11 +23,11 @@ import { createVariableType } from '@/app/actions/variableType'
 import { useRouter } from 'next/navigation'
 
 const inputSchema = z.object({
-  name: z.string().min(1, 'instance name required.'),
+  name: z.string().min(1, 'type name required.'),
   typeList: z
     .array(
       z.object({
-        name: z.string().min(1, 'instance element name required.'),
+        name: z.string().min(1, 'type element name required.'),
         canEmpty: z.boolean().optional().default(false)
       })
     )
@@ -39,7 +39,6 @@ const inputSchema = z.object({
 type InputSchema = z.infer<typeof inputSchema>
 
 const VariableTypeRegisterButton = () => {
-  // React Hook Form を使うための基本設定
   const {
     register,
     handleSubmit,

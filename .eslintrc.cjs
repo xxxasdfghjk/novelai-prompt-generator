@@ -5,7 +5,7 @@ module.exports = {
     'prettier'
   ],
   rules: {
-    'no-console': 'error',
+    'no-console': ['error', { allow: ['error'] }],
     'react/self-closing-comp': [
       'warn',
       {
