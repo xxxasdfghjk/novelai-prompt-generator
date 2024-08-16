@@ -24,6 +24,13 @@ const updateFormSchema = z.object({
   )
 })
 
+const deleteFormSchema = z.object({
+  variableInstanceId: z
+    .string()
+    .regex(/[0-9]+/)
+    .transform((e) => parseInt(e, 10))
+})
+
 const insertFormSchema = z.object({
   variableTypeId: z
     .string()
@@ -57,6 +64,29 @@ export const update = async (
         prisma.variableInstanceElement.update({ data: { text }, where: { id } })
       )
     )
+    return { state: 'success' }
+  } catch {
+    return { state: 'error' }
+  }
+}
+
+export const deleteInstanceElement = async (
+  prevState: State,
+  formData: FormData
+): Promise<State> => {
+  const formObject = formDataToObject(formData)
+  const parsed = deleteFormSchema.safeParse(formObject)
+  if (!parsed.success) {
+    return { state: 'error' }
+  }
+  const { variableInstanceId } = parsed.data
+  try {
+    await prisma.variableInstanceElement.deleteMany({
+      where: { variableInstanceId }
+    })
+    await prisma.variableInstance.deleteMany({
+      where: { id: variableInstanceId }
+    })
     return { state: 'success' }
   } catch {
     return { state: 'error' }

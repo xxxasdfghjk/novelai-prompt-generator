@@ -31,8 +31,8 @@ export const searchFiles = (
   return files.toSorted((e1, e2) =>
     e1.type === e2.type
       ? e1.name < e2.name
-        ? -1
-        : 1
+        ? 1
+        : -1
       : e1.type === 'directory'
         ? -1
         : 1

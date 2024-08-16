@@ -16,17 +16,19 @@ export const CustomExpandMoreIcon = styled(ExpandMore)(() => ({
 
 type Props = {
   step: number
-  accuracy: number
+  scale: number
   seed: number | undefined
   samplerName: (typeof SAMPLER)[number]
   dyn: boolean
   smea: boolean
-  onChangeStep: (step: number) => void
-  onChangeAccuracy: (accuracy: number) => void
+  rotate: boolean
+  onChangeStep: (sRotate: number) => void
+  onChangeScale: (scale: number) => void
   onChangeSeedValue: (seed: number | undefined) => void
   onChangeSampler: (sampler: (typeof SAMPLER)[number]) => void
   onChangeSMEA: (smea: boolean) => void
   onChangeDYN: (dyn: boolean) => void
+  onChangeRotate: (rotate: boolean) => void
 }
 const SAMPLER = [
   {
@@ -80,14 +82,14 @@ const ParameterList = (props: Props) => {
           />{' '}
         </div>
         <div className="min-w-16 max-w-18 mr-2">
-          <h4 className="pb-2 font-bold text-xs">Accuracy</h4>
+          <h4 className="pb-2 font-bold text-xs">Scale</h4>
           <TextField
             className="w-full bg-slate-950 rounded-md"
             type="number"
-            value={props.accuracy}
+            value={props.scale}
             onChange={(e) => {
               const value = Number(e.target.value)
-              props.onChangeAccuracy(value < 0 ? 0 : value > 10 ? 10 : value)
+              props.onChangeScale(value < 0 ? 0 : value > 10 ? 10 : value)
             }}
             inputProps={{ className: 'text-slate-50  py-2  text-xs' }}
           />{' '}
@@ -157,6 +159,24 @@ const ParameterList = (props: Props) => {
                 type="checkbox"
                 checked={props.dyn}
                 onChange={(e) => props.onChangeDYN(e.target.checked)}
+              />
+            }
+            sx={{
+              '& .MuiFormControlLabel-label': {
+                fontSize: '0.75rem'
+              }
+            }}
+          />
+        </div>
+        <div className="min-w-8 mr-2">
+          <FormControlLabel
+            label="rotate"
+            control={
+              <input
+                className="m-2 scale-150"
+                type="checkbox"
+                checked={props.rotate}
+                onChange={(e) => props.onChangeRotate(e.target.checked)}
               />
             }
             sx={{

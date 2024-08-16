@@ -1,6 +1,6 @@
 import { MAX_TOKEN_SIZE } from '@/const/const'
 import { TextField, Tooltip, LinearProgress } from '@mui/material'
-import React, { useCallback, useEffect } from 'react'
+import React, { useCallback } from 'react'
 import _debounce from 'lodash/debounce'
 
 type Props = {
@@ -12,14 +12,13 @@ type Props = {
 const InputPrompt = (props: Props) => {
   const getPromptTokenNum = useCallback(
     _debounce((value) => {
-      fetch(`http://localhost:3000/api/tokenize?text=${value}`)
-        .then((e) => e.json())
-        .then((e) => props.onGetPromptTokenNum(e.count))
+      return 1
+      // fetch(`http://localhost:3000/api/tokenize?text=${value}`)
+      //   .then((e) => e.json())
+      //   .then((e) => props.onGetPromptTokenNum(e.count))
     }, 500),
     []
   )
-  useEffect(() => getPromptTokenNum(props.prompt), [])
-
   return (
     <div className="px-3">
       <TextField

@@ -1,5 +1,8 @@
 'use client'
-import { update } from '@/app/actions/variableInstanceElement'
+import {
+  deleteInstanceElement,
+  update
+} from '@/app/actions/variableInstanceElement'
 import {
   TableContainer,
   Paper,
@@ -40,6 +43,9 @@ const VariableInstanceElementForm = ({
   const [state, updateAction] = useFormState(update, {
     state: 'initial' as const
   })
+  const [deleteState, deleteAction] = useFormState(deleteInstanceElement, {
+    state: 'initial' as const
+  })
   const router = useRouter()
   const [open, setOpen] = useState(false)
   useEffect(() => {
@@ -47,9 +53,19 @@ const VariableInstanceElementForm = ({
       setOpen(true)
       router.refresh()
     } else if (state.state === 'error') {
-      setOpen(true)
+      setOpen(false)
     }
   }, [state])
+
+  useEffect(() => {
+    if (deleteState.state === 'success') {
+      setOpen(true)
+      router.push('/variables/' + variableTypeId)
+    } else if (deleteState.state === 'error') {
+      setOpen(false)
+    }
+  }, [deleteState])
+
   return (
     <>
       <Breadcrumbs aria-label="breadcrumb" className="p-4 text-slate-100">
@@ -114,6 +130,17 @@ const VariableInstanceElementForm = ({
             </Button>
           </div>
         </form>
+        <form action={deleteAction}>
+          <input
+            type="hidden"
+            value={variableInstanceId}
+            name="variableInstanceId"
+          />
+          <Button type="submit" className="" variant="contained">
+            DELETE
+          </Button>
+        </form>
+
         <Snackbar
           open={open}
           autoHideDuration={2000}
