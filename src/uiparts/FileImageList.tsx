@@ -21,7 +21,7 @@ const FileImageList = (props: Props) => {
   const [open, setOpen] = useState(false)
   useEffect(() => {
     setSelectedFiles({})
-  }, [props.fileList])
+  }, [])
   const breadCrumbs =
     props.path === '/'
       ? []
@@ -52,6 +52,7 @@ const FileImageList = (props: Props) => {
       router.refresh()
       setOpen(false)
       props.onSuccessDelete()
+      setSelectedFiles({})
     } else if (state.state === 'error') {
       toast.error('file delete failed.')
     }

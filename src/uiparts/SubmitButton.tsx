@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useRef } from 'react'
 import CircularProgressWithLabel from './CircularProgressWithLabel'
 
 type Props = {
@@ -9,6 +9,19 @@ type Props = {
   onClickAbort: () => void
 }
 const SubmitButton = (props: Props) => {
+  const ref = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey && event.key === 'Enter') {
+        ref?.current?.click()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    // クリーンアップ
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
   return (
     <div className="h-20 mt-4">
       {!props.isProcessing && (
@@ -16,6 +29,7 @@ const SubmitButton = (props: Props) => {
           disabled={props.isProcessing}
           className="h-full w-full bg-amber-100 text-black font-bold text-xl hover:opacity-60 transition rounded-md"
           onClick={() => props.onSubmit()}
+          ref={ref}
         >
           SUBMIT
         </button>

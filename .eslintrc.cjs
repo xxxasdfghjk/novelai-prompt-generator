@@ -13,7 +13,7 @@ module.exports = {
         html: true
       }
     ],
-    'no-unused-vars': [
+    '@typescript-eslint/no-unused-vars': [
       'warn',
       {
         argsIgnorePattern: '^_',

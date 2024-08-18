@@ -6,10 +6,19 @@ import { ImageFile, Directory } from '@/types/File'
 import Image from 'next/image'
 import { getExifData } from '@/utils/exif'
 import { z } from 'zod'
-import { CopyAll } from '@mui/icons-material'
+import { ContentPaste, CopyAll } from '@mui/icons-material'
 import { copyToClipboard } from '@/utils/clipboard'
 import SettingForm from './SettingForm'
 import InfoIcon from '@mui/icons-material/Info'
+import {
+  folderNameAtom,
+  imageSizeAtom,
+  negativePromptAtom,
+  prefixAtom,
+  promptAtom,
+  seedAtom
+} from '@/utils/atoms'
+import { useAtom } from 'jotai/react'
 const exifSchema = z.object({
   prompt: z.string(),
   steps: z.number(),
@@ -36,6 +45,15 @@ const exifSchema = z.object({
   request_type: z.string(),
   signed_hash: z.string()
 })
+
+const extractFolderName = (path: string) => {
+  return path.split('/')[1] ?? ''
+}
+
+const extractPrefix = (fileName: string) => {
+  return fileName.match(/(.*)[0-9]{4}-[0-9]{2}-[0-9]{2}.*/)?.[1] ?? ''
+}
+
 type ExifSchema = z.infer<typeof exifSchema>
 const Generate = () => {
   const [path, setPath] = useState<string>('/')
@@ -43,9 +61,17 @@ const Generate = () => {
   const [selectedFile, setSelectedFile] = useState<ImageFile | undefined>(
     undefined
   )
-  const [openTip, setOpenTip] = useState(false)
+  const [openCopyTip, setOpenCopyTip] = useState(false)
+  const [openAllCopyTip, setOpenAllCopyTip] = useState(false)
+
   const [exif, setExif] = useState<ExifSchema | undefined>()
   const [openInfo, setOpenInfo] = useState(false)
+  const [, setPrompt] = useAtom(promptAtom)
+  const [, setNegativePrompt] = useAtom(negativePromptAtom)
+  const [, setFolderName] = useAtom(folderNameAtom)
+  const [, setPrefix] = useAtom(prefixAtom)
+  const [, setSeed] = useAtom(seedAtom)
+  const [, setImageSize] = useAtom(imageSizeAtom)
 
   const onClickFile = async (file: ImageFile) => {
     setSelectedFile(file)
@@ -88,25 +114,50 @@ const Generate = () => {
       <section className="w-[40%] flex flex-col items-center">
         <div className="w-full text-sm h-32 p-2 m-2 overflow-y-scroll relative">
           {exif && (
-            <Tooltip
-              arrow
-              open={openTip}
-              onClose={() => setOpenTip(false)}
-              disableHoverListener
-              placement="top"
-              title="Copied!"
-            >
-              <IconButton
-                size="small"
-                className="absolute right-4  hover:opacity-50"
-                onClick={() => {
-                  setOpenTip(true)
-                  copyToClipboard(exif.prompt)
-                }}
+            <>
+              <Tooltip
+                arrow
+                open={openCopyTip}
+                onClose={() => setOpenCopyTip(false)}
+                disableHoverListener
+                placement="top"
+                title="Copied!"
               >
-                <CopyAll className="fill-white" />
-              </IconButton>
-            </Tooltip>
+                <IconButton
+                  size="small"
+                  className="absolute right-4  hover:opacity-50"
+                  onClick={() => {
+                    setOpenCopyTip(true)
+                    copyToClipboard(exif.prompt)
+                  }}
+                >
+                  <CopyAll className="fill-white" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip
+                arrow
+                open={openAllCopyTip}
+                onClose={() => setOpenAllCopyTip(false)}
+                disableHoverListener
+                placement="top"
+                title="Copied!"
+              >
+                <IconButton
+                  size="small"
+                  className="absolute right-4 bottom-1  hover:opacity-50"
+                  onClick={() => {
+                    setPrompt(exif.prompt)
+                    setNegativePrompt(exif.uc)
+                    setImageSize({ height: exif.height, width: exif.width })
+                    setSeed(exif.seed)
+                    setFolderName(extractFolderName(selectedFile!.path) ?? '')
+                    setPrefix(extractPrefix(selectedFile!.name) ?? '')
+                  }}
+                >
+                  <ContentPaste className="fill-white" />
+                </IconButton>
+              </Tooltip>
+            </>
           )}
           {exif ? exif.prompt : 'No Prompt'}
         </div>

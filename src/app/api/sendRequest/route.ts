@@ -7,9 +7,11 @@ import { RequestPayload, sendRequest } from '@/utils/request'
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const payload = (await request.json()) as RequestPayload
   const blob = await sendRequest(payload)
-  const folderName = payload.input
-    .split(',')
-    .find((e) => e.trim() != '1girl' && e.trim() != '1boy')!
+  const folderName =
+    payload.parameters.folderName ??
+    payload.input
+      .split(',')
+      .find((e) => e.trim() != '1girl' && e.trim() != '1boy')!
   const prefix = payload.parameters.prefix ?? ''
   const file = Buffer.from(await blob.arrayBuffer())
   const fileName =

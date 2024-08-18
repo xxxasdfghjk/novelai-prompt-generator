@@ -24,6 +24,7 @@ export const deleteFiles = async (
   const formObject = formDataToObject(formData)
   const parsed = deleteFilesSchema.safeParse(formObject)
   if (!parsed.success) {
+    console.error(parsed.error)
     return { state: 'error' }
   }
   const { files } = parsed.data
@@ -37,6 +38,7 @@ export const deleteFiles = async (
         return { state: 'error' }
       }
       if (!fs.existsSync(filePath)) {
+        continue
         return { state: 'error' }
       }
       const targetInfo = fs.statSync(filePath)
@@ -47,6 +49,7 @@ export const deleteFiles = async (
     }
     return { state: 'success' }
   } catch (e) {
+    console.error(e)
     return { state: 'error' }
   }
 }

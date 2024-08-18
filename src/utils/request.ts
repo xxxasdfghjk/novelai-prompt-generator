@@ -27,6 +27,7 @@ export type RequestPayload = {
     reference_information_extracted_multiple: []
     reference_strength_multiple: []
     prefix?: string
+    folderName?: string
   }
 }
 

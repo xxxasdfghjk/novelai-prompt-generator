@@ -3,7 +3,7 @@ import React, { ChangeEvent, useEffect, useRef, useState } from 'react'
 import InputPrompt from './InputPrompt'
 import { Tab, TabList, TabPanel, Tabs } from 'react-tabs'
 import { useLocalStorage } from 'usehooks-ts'
-import ImageSizeSelector, { DEFAULT_IMAGE_SIZE } from './ImageSizeSelector'
+import ImageSizeSelector from './ImageSizeSelector'
 import BatchCount, { DEFAULT_NOISE, Noise } from './BatchCount'
 import ParameterList, { DEFAULT_SAMPLER, Sampler } from './ParameterList'
 import SaveSetting from './SaveSetting'
@@ -11,27 +11,30 @@ import SubmitButton from './SubmitButton'
 import { ImageFile } from '@/types/File'
 import { RequestPayload } from '@/utils/request'
 import { toast } from 'react-toastify'
-import { generateImage, generateSetting, Job } from '@/utils/generateSetting'
+import { generateImage, Job } from '@/utils/generateSetting'
 import { processJobList } from '../utils/generateSetting'
 import { z } from 'zod'
+import {
+  folderNameAtom,
+  imageSizeAtom,
+  prefixAtom,
+  promptAtom,
+  seedAtom
+} from '@/utils/atoms'
+import { useAtom } from 'jotai/react'
+import { negativePromptAtom } from '../utils/atoms'
 type Props = {
   onGenerateSuccess: (file: ImageFile, directory: string) => void
 }
 const SettingForm = (props: Props) => {
-  const [prompt, setPrompt] = useLocalStorage('prompt', '')
+  const [prompt, setPrompt] = useAtom(promptAtom)
   const [promptTokenNum, setPromptTokenNum] = useState(0)
-
-  const [negativePrompt, setNegativePrompt] = useLocalStorage(
-    'negativePrompt',
-    ''
-  )
+  const [negativePrompt, setNegativePrompt] = useAtom(negativePromptAtom)
   const [noise, setNoise] = useState<Noise>(DEFAULT_NOISE)
 
   const [negativePromptTokenNum, setNegativePromptTokenNum] = useState(0)
   const [batchCount, setBatchCount] = useLocalStorage('batch', 1)
-  const [imageSize, setImageSize] = useState<{ width: number; height: number }>(
-    { width: DEFAULT_IMAGE_SIZE.width, height: DEFAULT_IMAGE_SIZE.height }
-  )
+  const [imageSize, setImageSize] = useAtom(imageSizeAtom)
   const [totalCount, setTotalCount] = useState<number>(0)
 
   const [step, setStep] = useLocalStorage('step', 28)
@@ -40,17 +43,12 @@ const SettingForm = (props: Props) => {
   const [smea, setSMEA] = useLocalStorage<boolean>('smea', true)
   const [rotate, setRotate] = useLocalStorage<boolean>('rotate', false)
 
-  const [seed, setSeed] = useState<number | undefined>(undefined)
+  const [seed, setSeed] = useAtom(seedAtom)
   const [sampler, setSampler] = useState<Sampler>(DEFAULT_SAMPLER)
-  const [saveDestination, setSaveDestination] = useLocalStorage<
-    string | undefined
-  >('saveDestination', undefined)
-  const [useCustomSave, setUseCustomSave] = useLocalStorage<boolean>(
-    'useCustomSave',
-    false
-  )
   const [currentNum, setCurrentNum] = useState(0)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [prefix, setPrefix] = useAtom(prefixAtom)
+  const [folderName, setFolderName] = useAtom(folderNameAtom)
   const abortSignal = useRef<boolean>(false)
   const requestPayload = useRef<RequestPayload>()
   useEffect(() => {
@@ -109,7 +107,9 @@ const SettingForm = (props: Props) => {
             : requestPayload.current?.parameters.width,
           height: rotate
             ? requestPayload.current?.parameters.width
-            : requestPayload.current?.parameters.height
+            : requestPayload.current?.parameters.height,
+          folderName: folderName.length === 0 ? undefined : folderName,
+          prefix: prefix.length === 0 ? undefined : prefix
         }
       })
     }).then((e) => e.json())
@@ -135,6 +135,17 @@ const SettingForm = (props: Props) => {
     } catch (e) {
       console.error(e)
     } finally {
+      switch (Notification.permission) {
+        case 'default':
+          Notification.requestPermission()
+          break
+        case 'granted':
+          new Notification('NovelAI Generator', {
+            // ここを追加
+            body: '生成が完了しました'
+          })
+          break
+      }
       setIsProcessing(false)
       toast.success('generation done!')
     }
@@ -170,6 +181,8 @@ const SettingForm = (props: Props) => {
         }
       } catch (e) {
         alert('invalid format')
+      } finally {
+        event.target.value = ''
       }
     }
   }
@@ -194,6 +207,17 @@ const SettingForm = (props: Props) => {
     } catch (e) {
       console.error(e)
     } finally {
+      switch (Notification.permission) {
+        case 'default':
+          Notification.requestPermission()
+          break
+        case 'granted':
+          new Notification('NovelAI Generator', {
+            // ここを追加
+            body: '生成が完了しました'
+          })
+          break
+      }
       setIsProcessing(false)
       toast.success('generation done!')
     }
@@ -241,10 +265,19 @@ const SettingForm = (props: Props) => {
             />
           </TabPanel>
           <TabPanel>
-            <label>
-              <p>Upload</p>
-              <input type="file" accept=".json" onChange={handleFileUpload} />
-            </label>
+            <div className="px-6 py-4">
+              <label>
+                <p className="bg-orange-100 p-4 rounded-md text-slate-950 font-bold hover:opacity-60 hover:cursor-pointer">
+                  Upload
+                </p>
+                <input
+                  hidden
+                  type="file"
+                  accept=".json"
+                  onChange={handleFileUpload}
+                />
+              </label>
+            </div>
           </TabPanel>
         </Tabs>
         <ImageSizeSelector
@@ -276,10 +309,10 @@ const SettingForm = (props: Props) => {
         />
       </div>
       <SaveSetting
-        saveDest={saveDestination}
-        onChange={setSaveDestination}
-        useCustomSave={useCustomSave}
-        onChangeUseCustom={setUseCustomSave}
+        folderName={folderName}
+        onChangeFolderName={setFolderName}
+        prefix={prefix}
+        onChangePrefix={setPrefix}
       />
       <SubmitButton
         onSubmit={handleSubmit}
