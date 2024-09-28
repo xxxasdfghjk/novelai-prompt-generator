@@ -149,7 +149,7 @@ const Generate = () => {
                     setPrompt(exif.prompt)
                     setNegativePrompt(exif.uc)
                     setImageSize({ height: exif.height, width: exif.width })
-                    setSeed(exif.seed)
+                    // setSeed(exif.seed)
                     setFolderName(extractFolderName(selectedFile!.path) ?? '')
                     setPrefix(extractPrefix(selectedFile!.name) ?? '')
                   }}

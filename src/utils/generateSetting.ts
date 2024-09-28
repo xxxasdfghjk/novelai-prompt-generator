@@ -7,6 +7,7 @@ type Props = {
   prompt: string
   negativePrompt: string
   prefix?: string
+  scale?: number
 }
 export type Job = {
   width: number
@@ -16,6 +17,7 @@ export type Job = {
   batchCount: number
   rotate?: boolean
   $comment: string
+  scale?: number
 }
 
 export const processJobList = (jobList: Job[]) => {
@@ -26,7 +28,8 @@ export const processJobList = (jobList: Job[]) => {
         height: e.height,
         prompt: e.prompt,
         negativePrompt: e.negativePrompt,
-        prefix: e.$comment
+        prefix: e.$comment,
+        scale: e.scale
       })
     )
     if (e.rotate === true) {
@@ -38,7 +41,8 @@ export const processJobList = (jobList: Job[]) => {
             height: e.width,
             prompt: e.prompt,
             negativePrompt: e.negativePrompt,
-            prefix: e.$comment
+            prefix: e.$comment,
+            scale: e.scale
           })
         )
       ]
@@ -72,13 +76,30 @@ export const generateSetting = ({
   height,
   prompt,
   negativePrompt,
-  prefix
+  prefix,
+  scale
 }: Props): RequestPayload => {
+  const qualityTag =
+    'best quality , amazing quality , very aesthetic , absurdres'
+  const editPrompt =
+    prompt
+      .split(',')
+      .map((e) => e.trim())
+      .filter((e) => e.length > 0)
+      .join(', ') +
+    ',' +
+    qualityTag
+  const editNegativePrompt = negativePrompt
+    .split(',')
+    .map((e) => e.trim())
+    .filter((e) => e.length > 0)
+    .join(', ')
   return {
     ...JOB_DEFAULT_SETTING,
-    input: prompt,
+    input: editPrompt,
     parameters: {
       ...JOB_DEFAULT_SETTING.parameters,
+      scale: scale ?? 6.5,
       reference_image_multiple: [],
       reference_information_extracted_multiple: [],
       reference_strength_multiple: [],
@@ -86,7 +107,7 @@ export const generateSetting = ({
       height,
       prefix,
       seed: Math.floor(Math.random() * 9999999999),
-      negative_prompt: negativePrompt
+      negative_prompt: editNegativePrompt
     }
   }
 }

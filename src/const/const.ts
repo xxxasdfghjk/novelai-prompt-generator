@@ -7,7 +7,7 @@ export const JOB_DEFAULT_SETTING = {
     params_version: 1,
     width: 832,
     height: 1216,
-    scale: 5.0,
+    scale: 6.0,
     sampler: 'k_euler', // 'k_euler'
     steps: 28, // 28
     n_samples: 1, // 1

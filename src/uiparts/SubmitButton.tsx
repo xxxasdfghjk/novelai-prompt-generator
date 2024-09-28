@@ -38,8 +38,10 @@ const SubmitButton = (props: Props) => {
         <div className="flex flex-row justify-center h-full w-full bg-amber-100 text-black font-bold text-xl transition rounded-md">
           <CircularProgressWithLabel
             className="p-2 m-4"
-            value={(100 * props.currentNum) / props.totalNum}
+            currentNum={props.currentNum}
+            totalNum={props.totalNum}
           />
+
           <button
             className="bg-slate-800 text-slate-50 p-2 m-4 rounded-md cursor-pointer hover:opacity-50"
             onClick={() => props.onClickAbort()}

@@ -13,11 +13,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       .split(',')
       .find((e) => e.trim() != '1girl' && e.trim() != '1boy')!
   const prefix = payload.parameters.prefix ?? ''
+  if (blob === undefined) {
+    return new NextResponse(JSON.stringify({}), {
+      status: 500,
+      statusText: 'error'
+    })
+  }
   const file = Buffer.from(await blob.arrayBuffer())
   const fileName =
     getFormattedDate() +
     '/' +
-    folderName.trim().replaceAll(' ', '_') +
+    folderName
+      .replaceAll(' ', '_')
+      .replaceAll('{', '')
+      .replaceAll('}', '')
+      .trim() +
     '/' +
     prefix +
     getFormattedDateTime() +
@@ -50,7 +60,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     )
   } catch (e) {
-    console.error(e)
     console.error(e)
     return new NextResponse(
       JSON.stringify({

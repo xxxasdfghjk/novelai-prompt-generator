@@ -97,6 +97,9 @@ const FileImageList = (props: Props) => {
                   src={`http://localhost:3000/api/image?imagePath=${e.path}`}
                   alt={e.name}
                 />
+                <div className="absolute bottom-0 z-20 text-slate-800">
+                  {e.name}
+                </div>
               </div>
             ) : (
               <div

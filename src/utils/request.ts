@@ -34,14 +34,18 @@ export type RequestPayload = {
 export const sendRequest = async (props: RequestPayload) => {
   const requestPath = process.env.NEXT_PUBLIC_GENERATE_API_PATH!
   const accessToken = process.env.NEXT_PUBLIC_ACCESS_TOKEN
-  return await fetch(requestPath, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${accessToken}`
-    },
-    body: JSON.stringify(props)
-  }).then(async (e) => {
-    return await e.blob()
-  })
+  try {
+    return await fetch(requestPath, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`
+      },
+      body: JSON.stringify(props)
+    }).then(async (e) => {
+      return await e.blob()
+    })
+  } catch (e) {
+    console.error(e)
+  }
 }

@@ -20,7 +20,6 @@ const TemplateGeneratorPage = () => {
       </SideBar>
       <Content>
         <HeaderMenu selected="Setting" />
-        <TemplateGenerator />
       </Content>
     </section>
   )

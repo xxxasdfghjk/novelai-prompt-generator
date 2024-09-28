@@ -6,7 +6,11 @@ import {
 } from '@mui/material'
 
 function CircularProgressWithLabel(
-  props: CircularProgressProps & { value: number }
+  props: CircularProgressProps & {
+    totalNum: number
+    currentNum: number
+    percentage?: boolean
+  }
 ) {
   return (
     <Box sx={{ position: 'relative', display: 'inline-flex' }}>
@@ -23,12 +27,17 @@ function CircularProgressWithLabel(
           justifyContent: 'center'
         }}
       >
-        <Typography
-          variant="caption"
-          component="div"
-          color="text.secondary"
-        >{`${Math.round(props.value)}%`}</Typography>
+        <Typography variant="caption" component="div" color="text.secondary">
+          {props.percentage
+            ? `${Math.round((100 * props.currentNum) / props.totalNum)}%`
+            : `${props.currentNum}/${props.totalNum}`}
+        </Typography>
       </Box>
+      <div className="text-slate-800 font-normal text-xs">
+        estimated rest time:{' '}
+        {Math.ceil(10 * (((props.totalNum - props.currentNum) * 14) / 60)) / 10}
+        m
+      </div>
     </Box>
   )
 }

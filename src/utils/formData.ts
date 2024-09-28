@@ -9,5 +9,5 @@ const formDataToQueryString = (formData: FormData) => {
 }
 
 export const formDataToObject = (formData: FormData) => {
-  return qs.parse(formDataToQueryString(formData))
+  return qs.parse(formDataToQueryString(formData), { arrayLimit: 1000 })
 }

@@ -95,11 +95,19 @@ const ParameterList = (props: Props) => {
           />{' '}
         </div>
         <div className="min-w-8 mr-2">
-          <h4 className="pb-2 font-bold text-xs">Seed</h4>
+          <h4 className="pb-2 font-bold text-xs">
+            Seed
+            <button
+              className="text-[10px] rounded-sm p-1 mx-4 bg-slate-700"
+              onClick={() => props.onChangeSeedValue(undefined)}
+            >
+              Clear
+            </button>
+          </h4>
           <TextField
             className="w-full bg-slate-950 rounded-md"
             type="number"
-            value={props.seed}
+            value={props.seed ?? ''}
             onChange={(e) => {
               const value = parseInt(e.target.value, 10)
               props.onChangeSeedValue(value < 0 ? 0 : value)

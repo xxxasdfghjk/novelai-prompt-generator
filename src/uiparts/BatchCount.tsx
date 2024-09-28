@@ -46,7 +46,7 @@ const BatchCount = (props: Props) => {
           value={props.count}
           onChange={(e) => {
             const value = parseInt(e.target.value, 10)
-            props.onChangeCount(value > 1 ? value : 1)
+            props.onChangeCount(value)
           }}
           inputProps={{ className: 'text-slate-50  py-2' }}
         />

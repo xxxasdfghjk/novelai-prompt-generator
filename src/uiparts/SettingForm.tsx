@@ -23,9 +23,23 @@ import {
 } from '@/utils/atoms'
 import { useAtom } from 'jotai/react'
 import { negativePromptAtom } from '../utils/atoms'
+import { FormControlLabel, TextField } from '@mui/material'
 type Props = {
   onGenerateSuccess: (file: ImageFile, directory: string) => void
 }
+const batchFileSchema = z.array(
+  z.object({
+    order: z.number(),
+    $comment: z.string(),
+    batchCount: z.number(),
+    prompt: z.string(),
+    negativePrompt: z.string(),
+    height: z.number(),
+    width: z.number(),
+    rotate: z.boolean().optional().default(false)
+  })
+)
+type BatchFileSchema = z.infer<typeof batchFileSchema>
 const SettingForm = (props: Props) => {
   const [prompt, setPrompt] = useAtom(promptAtom)
   const [promptTokenNum, setPromptTokenNum] = useState(0)
@@ -47,10 +61,15 @@ const SettingForm = (props: Props) => {
   const [sampler, setSampler] = useState<Sampler>(DEFAULT_SAMPLER)
   const [currentNum, setCurrentNum] = useState(0)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [multiRatio, setMultiRatio] = useState(1)
+  const [jobScale, setJobScale] = useLocalStorage<number>('jobScale', 5.0)
+  const [trial, setTrial] = useLocalStorage<boolean>('trial', false)
+
   const [prefix, setPrefix] = useAtom(prefixAtom)
   const [folderName, setFolderName] = useAtom(folderNameAtom)
   const abortSignal = useRef<boolean>(false)
   const requestPayload = useRef<RequestPayload>()
+  const [batchFile, setBatchFile] = useState<BatchFileSchema | undefined>()
   useEffect(() => {
     requestPayload.current = {
       input: prompt,
@@ -95,10 +114,21 @@ const SettingForm = (props: Props) => {
     negativePrompt
   ])
   const genImage = async (rotate: boolean) => {
+    const qualityTag =
+      'best quality , amazing quality , very aesthetic , absurdres'
+    const editPrompt =
+      prompt
+        .split(',')
+        .map((e) => e.trim())
+        .filter((e) => e.length > 0)
+        .join(', ') +
+      ',' +
+      qualityTag
     return await fetch('http://localhost:3000/api/sendRequest', {
       method: 'POST',
       body: JSON.stringify({
         ...requestPayload.current,
+        input: editPrompt,
         parameters: {
           ...requestPayload.current?.parameters,
           seed: seed ? seed : Math.floor(Math.random() * 9999999999),
@@ -114,8 +144,19 @@ const SettingForm = (props: Props) => {
       })
     }).then((e) => e.json())
   }
+  const [currentTab, setCurrentTab] = useState(0)
+  const [selectedJob, setSelectedJob] = useState<Record<number, boolean>>({})
+
   const jobSubmit = async (rawJobList: Job[]) => {
-    const jobList = processJobList(rawJobList)
+    const jobList = processJobList(
+      trial
+        ? rawJobList.map((e) => ({ ...e, batchCount: 1, scale: jobScale }))
+        : rawJobList.map((e) => ({
+            ...e,
+            scale: jobScale,
+            batchCount: e.batchCount * multiRatio
+          }))
+    )
     setIsProcessing(true)
     setCurrentNum(0)
     setTotalCount(jobList.length)
@@ -141,7 +182,6 @@ const SettingForm = (props: Props) => {
           break
         case 'granted':
           new Notification('NovelAI Generator', {
-            // ここを追加
             body: '生成が完了しました'
           })
           break
@@ -156,30 +196,26 @@ const SettingForm = (props: Props) => {
       try {
         const text = await file.text()
         const json = JSON.parse(text)
-        const parsed = z
-          .array(
-            z.object({
-              $comment: z.string(),
-              batchCount: z.number(),
-              prompt: z.string(),
-              negativePrompt: z.string(),
-              height: z.number(),
-              width: z.number(),
-              rotate: z.boolean().optional().default(false)
-            })
-          )
-          .safeParse(json)
+        const parsed = batchFileSchema.safeParse(json)
         if (!parsed.success) {
+          console.error(parsed.error)
           throw Error('parse failed')
         } else {
-          jobSubmit(
-            parsed.data.map((e, i) => ({
-              ...e,
-              $comment: (i + 1).toString().padStart(3, '0') + e.$comment
-            }))
+          const editData = parsed.data.map((e) => ({
+            ...e,
+            $comment: e.order.toString().padStart(5, '0') + e.$comment,
+            batchCount: e.batchCount
+          }))
+          setBatchFile(editData)
+          setSelectedJob(
+            new Array(parsed.data.length)
+              .fill(0)
+              .map((e, i) => i)
+              .reduce((prev, cur) => ({ ...prev, [cur]: true }), {})
           )
         }
       } catch (e) {
+        console.error(e)
         alert('invalid format')
       } finally {
         event.target.value = ''
@@ -222,10 +258,15 @@ const SettingForm = (props: Props) => {
       toast.success('generation done!')
     }
   }
+
   return (
     <div>
       <div className="bg-slate-900 rounded-md pb-4">
-        <Tabs>
+        <Tabs
+          onSelect={(index) => {
+            setCurrentTab(index)
+          }}
+        >
           <TabList className="flex justify-start flex-row p-2">
             <Tab
               selectedClassName="bg-slate-950 rounded-lg font-bold !opacity-100"
@@ -266,63 +307,215 @@ const SettingForm = (props: Props) => {
           </TabPanel>
           <TabPanel>
             <div className="px-6 py-4">
-              <label>
-                <p className="bg-orange-100 p-4 rounded-md text-slate-950 font-bold hover:opacity-60 hover:cursor-pointer">
-                  Upload
-                </p>
-                <input
-                  hidden
-                  type="file"
-                  accept=".json"
-                  onChange={handleFileUpload}
+              <div className="p-2">
+                <label>
+                  <p className="bg-orange-100 p-4 rounded-md text-slate-950 font-bold hover:opacity-60 hover:cursor-pointer">
+                    Upload
+                  </p>
+                  <input
+                    hidden
+                    type="file"
+                    accept=".json"
+                    onChange={handleFileUpload}
+                  />
+                </label>
+              </div>
+              <div className="flex justify-between flex-row">
+                <div className="mr-4">
+                  <h2 className="pb-2 font-bold">Multi Ratio</h2>
+                  <TextField
+                    className="w-full bg-slate-950 rounded-md"
+                    type="number"
+                    value={multiRatio}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value, 10)
+                      setMultiRatio(value)
+                    }}
+                    inputProps={{ className: 'text-slate-50  py-2' }}
+                  />
+                </div>
+                <div className="mr-4">
+                  <h2 className="pb-2 font-bold">Scale</h2>
+                  <TextField
+                    className="w-full bg-slate-950 rounded-md"
+                    type="text"
+                    value={jobScale}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value, 10)
+                      setJobScale(value)
+                    }}
+                    inputProps={{ className: 'text-slate-50  py-2' }}
+                  />
+                </div>
+                <div className="min-w-8 mr-2">
+                  <FormControlLabel
+                    label="Trial"
+                    control={
+                      <input
+                        className="m-2 scale-150"
+                        type="checkbox"
+                        checked={trial}
+                        onChange={(e) => setTrial(e.target.checked)}
+                      />
+                    }
+                    sx={{
+                      '& .MuiFormControlLabel-label': {
+                        fontSize: '0.75rem'
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+              {batchFile && (
+                <div>
+                  <div className="flex justify-around flex-row">
+                    <div>
+                      <label>
+                        <p className="bg-orange-100 p-2 rounded-md text-slate-950 font-bold hover:opacity-60 hover:cursor-pointer">
+                          All Select
+                        </p>
+                        <input
+                          type="button"
+                          onClick={() =>
+                            setSelectedJob(() => {
+                              return new Array(batchFile.length)
+                                .fill(0)
+                                .map((_, i) => i)
+                                .reduce(
+                                  (prev, cur) => ({ ...prev, [cur]: true }),
+                                  {}
+                                )
+                            })
+                          }
+                        />
+                      </label>
+                    </div>
+                    <div>
+                      <label>
+                        <p className="bg-orange-100 p-2 rounded-md text-slate-950 font-bold hover:opacity-60 hover:cursor-pointer">
+                          Clear
+                        </p>
+                        <input
+                          type="button"
+                          onClick={() => setSelectedJob({})}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                  <table className="p-2 table-auto w-full">
+                    <thead>
+                      <tr>
+                        <th>No.</th>
+                        <th>Name</th>
+                        <th>Rotate</th>
+                        <th>Batch Count</th>
+                        <th>Target</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {batchFile.map((e, index) => (
+                        <tr
+                          key={e.$comment}
+                          onClick={() =>
+                            setSelectedJob((prev) => {
+                              const newSelectedJob = { ...prev }
+                              newSelectedJob[index] = !(prev[index] ?? false)
+                              return newSelectedJob
+                            })
+                          }
+                          className={`${selectedJob[index] ? 'bg-slate-700' : ''} cursor-pointer hover:opacity-50`}
+                        >
+                          <td className="px-2 w-10">{index + 1}</td>
+                          <td className="px-2">{e.$comment}</td>
+                          <td className="px-2">
+                            {e.rotate ? 'True' : 'False'}
+                          </td>
+                          <td className="px-2">{e.batchCount}</td>
+                          <td className="px-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedJob[index] ?? false}
+                              readOnly
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <div className="sticky bottom-3">
+                <SubmitButton
+                  onSubmit={() => {
+                    if (batchFile === undefined) {
+                      return
+                    }
+                    jobSubmit(
+                      batchFile.filter((_, i) => selectedJob[i] === true)
+                    )
+                  }}
+                  totalNum={totalCount}
+                  currentNum={currentNum}
+                  isProcessing={isProcessing}
+                  onClickAbort={() => {
+                    abortSignal.current = true
+                  }}
                 />
-              </label>
+              </div>
             </div>
           </TabPanel>
         </Tabs>
-        <ImageSizeSelector
-          width={imageSize.width}
-          height={imageSize.height}
-          onChange={({ width, height }) => setImageSize({ width, height })}
-        />
-        <BatchCount
-          count={batchCount}
-          onChangeCount={(count) => setBatchCount(count)}
-          noise={noise}
-          onChangeNoise={(noise) => setNoise(noise)}
-        />
-        <ParameterList
-          smea={smea}
-          dyn={dyn}
-          step={step}
-          scale={scale}
-          seed={seed}
-          samplerName={sampler}
-          rotate={rotate}
-          onChangeDYN={(dyn) => setDYN(dyn)}
-          onChangeSMEA={(smea) => setSMEA(smea)}
-          onChangeStep={(step) => setStep(step)}
-          onChangeScale={(scale) => setScale(scale)}
-          onChangeSeedValue={(seed) => setSeed(seed)}
-          onChangeSampler={(sampler) => setSampler(sampler)}
-          onChangeRotate={setRotate}
-        />
+        {currentTab !== 2 && (
+          <>
+            <ImageSizeSelector
+              width={imageSize.width}
+              height={imageSize.height}
+              onChange={({ width, height }) => setImageSize({ width, height })}
+            />
+            <BatchCount
+              count={batchCount}
+              onChangeCount={(count) => setBatchCount(count)}
+              noise={noise}
+              onChangeNoise={(noise) => setNoise(noise)}
+            />
+            <ParameterList
+              smea={smea}
+              dyn={dyn}
+              step={step}
+              scale={scale}
+              seed={seed}
+              samplerName={sampler}
+              rotate={rotate}
+              onChangeDYN={(dyn) => setDYN(dyn)}
+              onChangeSMEA={(smea) => setSMEA(smea)}
+              onChangeStep={(step) => setStep(step)}
+              onChangeScale={(scale) => setScale(scale)}
+              onChangeSeedValue={(seed) => setSeed(seed)}
+              onChangeSampler={(sampler) => setSampler(sampler)}
+              onChangeRotate={setRotate}
+            />
+          </>
+        )}
       </div>
-      <SaveSetting
-        folderName={folderName}
-        onChangeFolderName={setFolderName}
-        prefix={prefix}
-        onChangePrefix={setPrefix}
-      />
-      <SubmitButton
-        onSubmit={handleSubmit}
-        totalNum={totalCount}
-        currentNum={currentNum}
-        isProcessing={isProcessing}
-        onClickAbort={() => {
-          abortSignal.current = true
-        }}
-      />
+      {currentTab !== 2 && (
+        <>
+          <SaveSetting
+            folderName={folderName}
+            onChangeFolderName={setFolderName}
+            prefix={prefix}
+            onChangePrefix={setPrefix}
+          />
+          <SubmitButton
+            onSubmit={handleSubmit}
+            totalNum={totalCount}
+            currentNum={currentNum}
+            isProcessing={isProcessing}
+            onClickAbort={() => {
+              abortSignal.current = true
+            }}
+          />
+        </>
+      )}
     </div>
   )
 }
